@@ -3,6 +3,7 @@ var logger = require('winston');
 var auth = require('./auth.json');
 var data = require('./data.json');
 var request = require('request');
+var cses = require("./cses.js");
 const client = new Discord.Client();
 client.login(auth.token);
 'use strict';
@@ -27,21 +28,14 @@ client.on('ready', () => {
 });
 
 
-
-var geturl = function(id){
-	return 'https://cses.fi/user/'+id+'/'
-}
 var ans;
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 var curchannel;
-var substrtream = function(all, start, end){
-	var begin=all.indexOf(start)+start.length;
-	return all.substring(begin).substring(0,all.substring(begin).indexOf(end));
-}
-var people=[];
+
+//var people=[];
 
 var snapcontent = function(id){
 	logger.info(geturl(id));
@@ -82,77 +76,6 @@ var removeid = function(id){
 		logger.info('Id: '+id+' not removed because not found');
 	ids=newids;
 }
-var reduceto = function(s,len){
-	var messagge='';
-	for(var i=0;i<Math.floor((len-s.length)/2);i++){
-		messagge+=' ';
-	}
-	messagge+=s;
-	for(var i=0;i<Math.ceil((len-s.length)/2);i++){
-		messagge+=' ';
-	}
-	return messagge;
-}
-var outchannel;
-var outputresults = function(){
-	if(people.length!=ids.length)
-		return;
-	var ranklen=8;
-	var namelen=16;
-	var solvedlen=8;
-	var messagge='```\n';
-	messagge+= reduceto('Ranking',ranklen) + '|'+reduceto('Username',namelen)+ '|' +reduceto('Solved',solvedlen)+ '| Last Submission\n';
-	people.sort(function(a, b) {
-		if(a.num!=b.num)
-		return b.num - a.num;
-		return b.lastsubmit > a.lastsubmit;
-	});
-	for(var i=0;i<people.length;i++){
-		messagge+= reduceto('    '+(i+1)+'.',ranklen) + '|'+reduceto(people[i].name,namelen)+ '|' +reduceto(''+people[i].num,solvedlen)+ '| '+ people[i].lastsubmit +'\n';
-		//messagge+=((i+1) + '.\t\t|' + people[i].name +  '\t\t|' + people[i].num +'\t|'  + people[i].lastsubmit +'\n');
-	}
-	messagge+='```';
-	logger.info('score sended to: ' + curchannel);
-	outchannel.send(messagge);
-}
-var globalchecksum;
-var results = function(){
-	logger.info(people);
-	people.splice(0,people.length);
-	if(ids.length==0){
-		outchannel.send('שגיאה! פחות מדי אנשים');
-	}
-	globalchecksum=Math.floor(Math.random()*1489124);
-	var curchecksum=globalchecksum;
-	for(var i=0;i<ids.length;i++){
-		
-		request(geturl(ids[i]), { json: true }, (err, res, body) => {
-			if (err) { 
-				logger.info('err!');
-				return;
-			}
-			if(curchecksum!=globalchecksum){
-				logger.info('late request please ignore');
-				return;
-			}
-			ans= body;
-			var id=substrtream(ans,'<a href="/problemset/user/','/">');
-			var name=substrtream(ans,'<title>CSES - User ','</title>');
-			var num=substrtream(ans,'<tr><td >CSES Problem Set</td><td ><a href="/problemset/user/'+id +'/">','</a></td></tr>');
-			num=Number(num);
-			var lastsubmit=substrtream(ans,'<tr><td >Last submission</td><td >','</td></tr>');
-			//num= num.praseInt(10);
-			var person={};
-			person.id=id;
-			person.num=num;
-			person.name=name;
-			person.lastsubmit=lastsubmit;
-			people.push(person);
-			logger.info('Id: '+id+'\nName: '+name+'\n'+'Problems solved: '+num + '\n' +'Last submission: '+lastsubmit + '\n');
-			outputresults();
-		});
-	}
-}
 var quotes=['זה ספר - מין דבר מלבני כזה עם דפים','אני מאמין בחומוס',"אם חם לכם יותר מדי צאו מהמטבח","אבא שלי אמר לי: לעולם לא תהיה גמל, נולדת חמור","אם תשאר אנושות ישאר ioi",
 	"תקשיבו אני בבית עם אשתי + 3 טרוריסטים. (חיזב-אלה, חמא-סופי והאביב הערבי וכאמור האימאם שלהם) אתם יודעים מה זה להיות בסגר איתי? אישתי עוד רגע מדביקה את עצמה בקורנה רק בשביל שישימו אותה בבידוד בשקט ועוד לא דיברתי על הארגוני טרור. תעלו. זה חשוב. לחיי הנישואים שלי. לא בא לי להפרד ממנה. יהיה באסה למחוק את הפלאפון שלה מכול הזכרונות ומצד שני היא טוענת שסגר בבית איתי זה עינוי שהסינים לא חשבו עליו.",
 	"יש מאמנים שקיבלו את התפקיד כי הם גאונים אני קיבלתי אותו כי אני קרציה. אבל אולימפית!",
@@ -174,7 +97,7 @@ var resultschannel;
 var interval=-1;
 var intervalresults = function(){
 	outchannel=resultschannel;
-	results();
+	cses.results(resultschannel,ids);
 }
 client.on('message', msg => {//(user, userID, channelID, message, evt) 
 	//logger.info(msg);
@@ -296,13 +219,15 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				break;
 			case 'leaderboard':
 			case 'scoreboard':
-				outchannel=curchannel;
+				//outchannel=curchannel;
+				logger.info(cses);
 				if(Math.random()<0.3){
 					var possibleresponses=['כמה זמן אתה רק מסתכל על תוצאות','לא יתווספו לך שאלות נוספות רק מלהסתכל אתה יודע?','אני הרשתי מסתכלת בתוצאות דא?','תפסיק להסתכל על תוצאות ותפתור שאלות'];
-					channel.send(possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
+					channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
 					logger.info('answering call for leaderboard');
 				}
-				results();
+				
+				cses.results(curchannel,ids);
 				break;
 			case 'load':
 				data = require('./data.json');
@@ -341,13 +266,13 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 		 }else if(message == 'cses!leaderboard'){
 			 if(Math.random()<0.4){
 				var possibleresponses=['כמה זמן אתה רק מסתכל על תוצאות','לא יתווספו לך שאלות נוספות רק מלהסתכל אתה יודע?','אני הרשתי מסתכלת בתוצאות דא?','תפסיק להסתכל על תוצאות ותפתור שאלות'];
-				channel.send('<@' +userID+'>'+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
+				channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
 				logger.info('<@' +userID+'>'+'answering call for leaderboard');
 			 }
 		 }else{
 			 if(Math.random()<0.03){
 				var possibleresponses=['תפסיק לדבר ותפתור שאלות','אני הרשתי מדברת דא?'];
-				channel.send(possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
+				channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
 				logger.info('answering random message');
 			 }
 		 }
