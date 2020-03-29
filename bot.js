@@ -93,6 +93,7 @@ var reduceto = function(s,len){
 	}
 	return messagge;
 }
+var outchannel;
 var outputresults = function(){
 	if(people.length!=ids.length)
 		return;
@@ -112,18 +113,26 @@ var outputresults = function(){
 	}
 	messagge+='```';
 	logger.info('score sended to: ' + curchannel);
-	curchannel.send(messagge);
+	outchannel.send(messagge);
 }
+var globalchecksum;
 var results = function(){
 	logger.info(people);
 	people.splice(0,people.length);
 	if(ids.length==0){
-		curchannel.send('שגיאה! פחות מדי אנשים');
+		outchannel.send('שגיאה! פחות מדי אנשים');
 	}
+	globalchecksum=Math.floor(Math.random()*1489124);
+	var curchecksum=globalchecksum;
 	for(var i=0;i<ids.length;i++){
+		
 		request(geturl(ids[i]), { json: true }, (err, res, body) => {
 			if (err) { 
 				logger.info('err!');
+				return;
+			}
+			if(curchecksum!=globalchecksum){
+				logger.info('late request please ignore');
 				return;
 			}
 			ans= body;
@@ -150,7 +159,8 @@ var quotes=['זה ספר - מין דבר מלבני כזה עם דפים','אנ�
 	"אין מה לעשות בפ״ת אפילו כשאין קורונה.",
 	"היום יושב על תרגיל לרפאל. מחר פוגשת שמה את יוליה! מתכנתת אמבדד! טאק! מתחתן! טאק! אבא לחמישה ילדים! טאק מתגרש! משלם 7000 שקל מזונות בחודש! עובר לגור בתחנה מרכזית. בקופסת קרטון של פריג׳דר!",
 	"יווו אתם יותר משועממים מהורה שהשאירו לו 3 ילדים בבית שצופים בלי הפסקה בסרטונים של לאנה מיינהארט",
-	"פתאום אני מתחיל לקרוא על מלחמת העולם השנייה וללמוד גבול של פונקציה"];
+	"פתאום אני מתחיל לקרוא על מלחמת העולם השנייה וללמוד גבול של פונקציה",
+	"אגב יש לי כל מיני אויבים. נניח נסראללה זה רמה אחת. ביבי זה רמה 13 אבל לאנה מיינהארט היא הבוס הגדול. מספיק שאני אשמע את הקול שלה כדי שימותו לי 70 תאי מוח"];
 var randomquote = function(channelID){
 	curchannel.send(quotes[Math.floor(Math.random()*quotes.length)]);
 }
@@ -160,6 +170,12 @@ var randomquote = function(channelID){
     msg.reply('Pong!');
   }
 });*/
+var resultschannel;
+var interval=-1;
+var intervalresults = function(){
+	outchannel=resultschannel;
+	results();
+}
 client.on('message', msg => {//(user, userID, channelID, message, evt) 
 	//logger.info(msg);
 	var message=msg.content;
@@ -189,7 +205,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
         switch(cmd) {
 			case 'help':
 				var message='';
-				var documntation=['ברוך הבא ל NezerNot גרסא 1.0.0','מצורפת רשימה של כל הפקודות החוקיות:',
+				var documntation=['ברוך הבא ל NezerBot גרסא 1.0.0','מצורפת רשימה של כל הפקודות החוקיות:',
 				'!help '+' קבל את ההודעה הזאת',
 				'!ping '+'בדוק האם הבוט הזה חי',
 				'!snap [args]'  + ' שנתונים ברשימה CSES' + ' קבל את המצב על משתמשי ',
@@ -198,17 +214,39 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				'!leaderboard + !scoreboard' + ' הדפס את לוח התוצאות',
 				'!load' + ' CSESטען מתוך הזכרון המקומי את רשימת משתמשי ה',
 				'!unload' + ' CSES שמור לזכרון המקומי את רשימת המעקב על',
-				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הצועו מהקשרן)'+' הדפס ציטוט אקראי של נצר '];
+				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הצועו מהקשרם)'+' הדפס ציטוט אקראי של נצר ',
+				'!addtimer minutes' +' הדפס כל כמות כזאת של דקות את התוצאות לערוץ הזה ',
+				'!removetimer' +' מוריד את הטיימר הקבוע של התוצאות ',
+				'!shutup' +' אמור להשתיק אותו כן בטח '];
 				for(var i=0;i<documntation.length;i++){
 					message += documntation[i]+'\n';
 				}
 				channel.send(message);
+				break;
+			case 'addtimer':
+				if(args.length==0 || !(Number(args[0])>= 1)||  !(Number(args[0])<= 24*60)){
+					channel.send('הכנס מספר חוקי של דקות!');
+					return;
+				}
+				resultschannel=curchannel;
+				if(interval!=-1){
+					clearInterval(interval);
+				}
+				interval=setInterval(intervalresults,60000*(Number(args[0])));
+				logger.info('added interval');
 				break;
             case 'ping':
 				channel.send('אני חי כמו תמיד');
 				break;
 			case 'shutup':
 				channel.send('<@' +userID+'> אוקי אבל קודם פתור 100 שאלות');
+			case 'removetimer':
+				if(interval!=-1){
+					clearInterval(interval);
+					logger.info('removed interval');
+				}else{
+					channel.send('לא נמצא טיימר!');
+				}
 				break;
 			case 'channel':
                 channel.send(channelID);
@@ -258,6 +296,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				break;
 			case 'leaderboard':
 			case 'scoreboard':
+				outchannel=curchannel;
 				if(Math.random()<0.3){
 					var possibleresponses=['כמה זמן אתה רק מסתכל על תוצאות','לא יתווספו לך שאלות נוספות רק מלהסתכל אתה יודע?','אני הרשתי מסתכלת בתוצאות דא?','תפסיק להסתכל על תוצאות ותפתור שאלות'];
 					channel.send(possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
@@ -302,8 +341,8 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 		 }else if(message == 'cses!leaderboard'){
 			 if(Math.random()<0.4){
 				var possibleresponses=['כמה זמן אתה רק מסתכל על תוצאות','לא יתווספו לך שאלות נוספות רק מלהסתכל אתה יודע?','אני הרשתי מסתכלת בתוצאות דא?','תפסיק להסתכל על תוצאות ותפתור שאלות'];
-				channel.send(possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
-				logger.info('answering call for leaderboard');
+				channel.send('<@' +userID+'>'+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
+				logger.info('<@' +userID+'>'+'answering call for leaderboard');
 			 }
 		 }else{
 			 if(Math.random()<0.03){
