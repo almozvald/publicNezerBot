@@ -26,17 +26,11 @@ client.on('ready', () => {
     logger.info(client.user.username + ' - (' + client.user.id + ')');
 	ids = data.ids;
 });
-
-
 var ans;
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
-
 var curchannel;
-
-//var people=[];
-
 var snapcontent = function(id){
 	logger.info(geturl(id));
 	request(geturl(id), { json: true }, (err, res, body) => {
@@ -44,17 +38,13 @@ var snapcontent = function(id){
 			logger.info('err!');
 			return;
 		}
-		//logger.info(body.url);
 		ans= body;
 		var name=substrtream(ans,'<title>CSES - User ','</title>');
 		var num=substrtream(ans,'<tr><td >CSES Problem Set</td><td ><a href="/problemset/user/'+id +'/">','</a></td></tr>');
 		num=Number(num);
 		var lastsubmit=substrtream(ans,'<tr><td >Last submission</td><td >','</td></tr>');
-		//num= num.praseInt(10);
 		curchannel.send('Id: '+id+'\nName: '+name+'\n'+'Problems solved: '+num + '\n' +'Last submission: '+lastsubmit + '\n');
 	});
-	//logger.info(ans);
-	//return ans;
 }
 var addid = function(id){
 	for(var i=0;i<ids.length;i++){
@@ -88,11 +78,6 @@ var randomquote = function(channelID){
 	curchannel.send(quotes[Math.floor(Math.random()*quotes.length)]);
 }
 
-/*client.on('message', msg => {
-  if (msg.content === 'ping') {
-    msg.reply('Pong!');
-  }
-});*/
 var resultschannel;
 var interval=-1;
 var intervalresults = function(){
@@ -137,10 +122,11 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				'!leaderboard + !scoreboard' + ' הדפס את לוח התוצאות',
 				'!load' + ' CSESטען מתוך הזכרון המקומי את רשימת משתמשי ה',
 				'!unload' + ' CSES שמור לזכרון המקומי את רשימת המעקב על',
-				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הצועו מהקשרם)'+' הדפס ציטוט אקראי של נצר ',
+				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הוצאו מהקשרם)'+' הדפס ציטוט אקראי של נצר ',
 				'!addtimer minutes' +' הדפס כל כמות כזאת של דקות את התוצאות לערוץ הזה ',
 				'!removetimer' +' מוריד את הטיימר הקבוע של התוצאות ',
-				'!shutup' +' אמור להשתיק אותו כן בטח '];
+				'!shutup' +' אמור להשתיק אותו כן בטח ',
+				'!randomquestion' +' !קבל שאלה אקראית ואם תצליח לפתור אותה תקבל הפתעה! '];
 				for(var i=0;i<documntation.length;i++){
 					message += documntation[i]+'\n';
 				}
@@ -243,6 +229,13 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 						logger.info('completed unloading');
 						channel.send('שמרתי את רשימת המעקב הנוכחית שלי');
 				});
+				break;
+			case 'randomquestion':
+				const embed = new Discord.MessageEmbed()
+				.setTitle('הנה שאלה בשבילך')
+				.setColor(0x0000ff)
+				.setURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+				channel.send(embed);
 				break;
 			default :
 				channel.send(':לא ממש הבנתי מה אתה מנסה להגיד הפקודות החוקיות הן' + '\n!add !help !scoreboard !randomquote !shutup !wakeup !remove');
