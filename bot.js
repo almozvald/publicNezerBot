@@ -134,7 +134,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				channel.send(message);
 				break;
 			case 'addtimer':
-				if(args.length==0 || !(Number(args[0])>= 1)||  !(Number(args[0])<= 24*60)){
+				if(args.length==0 || !(Number(args[0])>= 1)||  !(Number(args[0])<= 24*60*7)){
 					channel.send('הכנס מספר חוקי של דקות!');
 					return;
 				}
@@ -143,7 +143,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 					clearInterval(interval);
 				}
 				interval=setInterval(intervalresults,60000*(Number(args[0])));
-				channel.send('תיימר הופעל');
+				channel.send('טיימר הופעל');
 				logger.info('added interval');
 				break;
             case 'ping':
