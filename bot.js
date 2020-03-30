@@ -82,7 +82,7 @@ var resultschannel;
 var interval=-1;
 var intervalresults = function(){
 	outchannel=resultschannel;
-	cses.results(resultschannel,ids);
+	cses.difresults(resultschannel,ids);
 }
 client.on('message', msg => {//(user, userID, channelID, message, evt) 
 	//logger.info(msg);
@@ -120,6 +120,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				'!add [args]' + ' שנתונים ברשימה CSES' +' הוסף לרשימת המעקב משתמשי',
 				'!remove [args]' + ' שנתונים ברשימה CSES' +' הורד מרשימת המעקב משתמשי ',
 				'!leaderboard + !scoreboard' + ' הדפס את לוח התוצאות',
+				'!difleaderboard + !difscoreboard' + ' הדפס את שינויי לוח התוצאות',
 				'!load' + ' CSESטען מתוך הזכרון המקומי את רשימת משתמשי ה',
 				'!unload' + ' CSES שמור לזכרון המקומי את רשימת המעקב על',
 				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הוצאו מהקשרם)'+' הדפס ציטוט אקראי של נצר ',
@@ -142,6 +143,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 					clearInterval(interval);
 				}
 				interval=setInterval(intervalresults,60000*(Number(args[0])));
+				channel.send('תיימר הופעל');
 				logger.info('added interval');
 				break;
             case 'ping':
@@ -214,6 +216,11 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				}
 				
 				cses.results(curchannel,ids);
+				
+				break;
+			case 'difleaderboard':
+			case 'difscoreboard':
+				cses.difresults(curchannel,ids);
 				break;
 			case 'load':
 				data = require('./data.json');
