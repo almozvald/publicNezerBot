@@ -4,6 +4,7 @@ var auth = require('./auth.json');
 var data = require('./data.json');
 var request = require('request');
 var cses = require("./cses.js");
+var codeforces = require("./codeforces.js");
 const client = new Discord.Client();
 client.login(auth.token);
 'use strict';
@@ -25,6 +26,7 @@ client.on('ready', () => {
     logger.info('Logged in as: ');
     logger.info(client.user.username + ' - (' + client.user.id + ')');
 	ids = data.ids;
+	cses.setpeople(data.people);
 });
 var ans;
 function sleep(ms) {
@@ -73,9 +75,22 @@ var quotes=['זה ספר - מין דבר מלבני כזה עם דפים','אנ�
 	"היום יושב על תרגיל לרפאל. מחר פוגשת שמה את יוליה! מתכנתת אמבדד! טאק! מתחתן! טאק! אבא לחמישה ילדים! טאק מתגרש! משלם 7000 שקל מזונות בחודש! עובר לגור בתחנה מרכזית. בקופסת קרטון של פריג׳דר!",
 	"יווו אתם יותר משועממים מהורה שהשאירו לו 3 ילדים בבית שצופים בלי הפסקה בסרטונים של לאנה מיינהארט",
 	"פתאום אני מתחיל לקרוא על מלחמת העולם השנייה וללמוד גבול של פונקציה",
-	"אגב יש לי כל מיני אויבים. נניח נסראללה זה רמה אחת. ביבי זה רמה 13 אבל לאנה מיינהארט היא הבוס הגדול. מספיק שאני אשמע את הקול שלה כדי שימותו לי 70 תאי מוח"];
+	"אגב יש לי כל מיני אויבים. נניח נסראללה זה רמה אחת. ביבי זה רמה 13 אבל לאנה מיינהארט היא הבוס הגדול. מספיק שאני אשמע את הקול שלה כדי שימותו לי 70 תאי מוח",
+	"אתם פשוט לא מעכלים מה זה לישמוע את הקול ציפציף של לאנה מיינהארט מסבירה איך להכין סליים ורוד אבל מסריח ודביק עם נצנצים",
+	"לא יודע מי זה דויד  צילג אבל אני מחנך את הילדים שאם הם לא בטוחים שיעשו ההפך ממה שהמורה אומרת\n"+
+	"כלומר אם המורה אומרת לא לשחק בכביש אז בפוקס יצא לה נכון\n"+
+	"אבל אם אומרים לבנות שלי שמחשבים זה לבנים (סיפור אמיתי) שיעשו מה שבה להם\n"+
+	"אם זה יכול להיות מטר או משהו\n"+
+	"היה כבר דיון ארוך (ניסו ללמד אותם סדר גודל) אז שאלו את הילדה מה יהיה עובי של 10 ספרים.\n"+
+	"בקיצור אלה מצאה באינטרנט מה הספר הכי עבה בעולם - יכול להיות 10 מטר\n"+
+	"אז פסלו לה את העבודה. היו מריבות עם המורה מפה עד להודעה חדשה.",
+	"אין לך מושג כמה זה נורא. אם אני צריך לבחור צעדת מוות מאושוויץ או לשמוע את לאנה מיינהארט אני נועל נעלי הליכה נשבע לך"];
 var randomquote = function(channelID){
 	curchannel.send(quotes[Math.floor(Math.random()*quotes.length)]);
+}
+var allquote = function(channelID){
+	for(var i=0;i<quotes.length;i++)
+		curchannel.send(quotes[i]);
 }
 
 var resultschannel;
@@ -113,7 +128,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
         switch(cmd) {
 			case 'help':
 				var message='';
-				var documntation=['ברוך הבא ל NezerBot גרסא 1.0.0','מצורפת רשימה של כל הפקודות החוקיות:',
+				var documntation=['ברוך הבא ל NezerBot גרסא1.1.0','מצורפת רשימה של כל הפקודות החוקיות:',
 				'!help '+' קבל את ההודעה הזאת',
 				'!ping '+'בדוק האם הבוט הזה חי',
 				'!snap [args]'  + ' שנתונים ברשימה CSES' + ' קבל את המצב על משתמשי ',
@@ -124,10 +139,12 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				'!load' + ' CSESטען מתוך הזכרון המקומי את רשימת משתמשי ה',
 				'!unload' + ' CSES שמור לזכרון המקומי את רשימת המעקב על',
 				'!randomquote ' +' (disclaimer: הציטוטים בחלקן הוצאו מהקשרם)'+' הדפס ציטוט אקראי של נצר ',
+				'!allquote ' +' (disclaimer: הציטוטים בחלקן הוצאו מהקשרם)'+' הדפס את כל ציטטוי נצר ',
 				'!addtimer minutes' +' הדפס כל כמות כזאת של דקות את התוצאות לערוץ הזה ',
 				'!removetimer' +' מוריד את הטיימר הקבוע של התוצאות ',
 				'!shutup' +' אמור להשתיק אותו כן בטח ',
-				'!randomquestion' +' !קבל שאלה אקראית ואם תצליח לפתור אותה תקבל הפתעה! '];
+				'!randomquestion' +' !קבל שאלה אקראית ואם תצליח לפתור אותה תקבל הפתעה! ',
+				'!getalltags [number]' +' קבל את רשימת התאגים שיש מהם לפחות כמות כזאת של שאלות '];
 				for(var i=0;i<documntation.length;i++){
 					message += documntation[i]+'\n';
 				}
@@ -159,9 +176,6 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 					channel.send('לא נמצא טיימר!');
 				}
 				break;
-			case 'channel':
-                channel.send(channelID);
-				break
 			case 'snap':
 				if(args.length==0){
 					channel.send('מעניין ביקשת ממני להדפיס את התוכן על אנשים אבל לא אמרת איזה\n'+'אתה יכול לתת רשימה של ids מופרדים ברווח בודד');
@@ -201,9 +215,8 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 			case 'randomquote':
 				randomquote(channelID);
 				break;
-			case 'israndom':
-				for(var i=0;!(i==args[0]);i++)
-					logger.info(Math.random());
+			case 'allquote':
+				allquote(channelID);
 				break;
 			case 'leaderboard':
 			case 'scoreboard':
@@ -230,12 +243,21 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				break;
 			case 'unload':
 				data.ids=ids;
+				data.people=cses.getpeople();
 				var fs = require('fs');
 				fs.writeFile('data.json', JSON.stringify(data), 'utf8', function(err) {
 						if (err) throw err;
 						logger.info('completed unloading');
 						channel.send('שמרתי את רשימת המעקב הנוכחית שלי');
 				});
+				break;
+			case 'getalltags':
+				var num=1;
+				if(args.length>0){
+					num=Number(args[0]);
+				}
+				codeforces.getAllTags(curchannel,num);
+				channel.send('זה יכול לקחת קצת זמן היעזר בסבלנות');
 				break;
 			case 'randomquestion':
 				const embed = new Discord.MessageEmbed()
@@ -270,8 +292,8 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				logger.info('<@' +userID+'>'+'answering call for leaderboard');
 			 }
 		 }else{
-			 if(Math.random()<0.03){
-				var possibleresponses=['תפסיק לדבר ותפתור שאלות','אני הרשתי מדברת דא?'];
+			 if(Math.random()<0.04){
+				var possibleresponses=['תפסיק לדבר ותפתור שאלות','אני הרשתי מדברת דא?','כולך דיבורים איפה שאלות?','שתוק'];
 				channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
 				logger.info('answering random message');
 			 }
