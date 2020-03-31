@@ -131,9 +131,9 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				var documntation=['ברוך הבא ל NezerBot גרסא1.1.0','מצורפת רשימה של כל הפקודות החוקיות:',
 				'!help '+' קבל את ההודעה הזאת',
 				'!ping '+'בדוק האם הבוט הזה חי',
-				'!snap [args]'  + ' שנתונים ברשימה CSES' + ' קבל את המצב על משתמשי ',
-				'!add [args]' + ' שנתונים ברשימה CSES' +' הוסף לרשימת המעקב משתמשי',
-				'!remove [args]' + ' שנתונים ברשימה CSES' +' הורד מרשימת המעקב משתמשי ',
+				'!snap [ids]'  + ' שנתונים ברשימה CSES' + ' קבל את המצב על משתמשי ',
+				'!add [ids]' + ' שנתונים ברשימה CSES' +' הוסף לרשימת המעקב משתמשי',
+				'!remove [ids]' + ' שנתונים ברשימה CSES' +' הורד מרשימת המעקב משתמשי ',
 				'!leaderboard + !scoreboard' + ' הדפס את לוח התוצאות',
 				'!difleaderboard + !difscoreboard' + ' הדפס את שינויי לוח התוצאות',
 				'!load' + ' CSESטען מתוך הזכרון המקומי את רשימת משתמשי ה',
@@ -143,7 +143,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				'!addtimer minutes' +' הדפס כל כמות כזאת של דקות את התוצאות לערוץ הזה ',
 				'!removetimer' +' מוריד את הטיימר הקבוע של התוצאות ',
 				'!shutup' +' אמור להשתיק אותו כן בטח ',
-				'!randomquestion' +' !קבל שאלה אקראית ואם תצליח לפתור אותה תקבל הפתעה! ',
+				'!randomquestion [args]' +' בתוך הארגומנטים של הפקודה help קבל שאלה אקראית לתמיכה נוספת נסה  ',
 				'!getalltags [number]' +' קבל את רשימת התאגים שיש מהם לפחות כמות כזאת של שאלות '];
 				for(var i=0;i<documntation.length;i++){
 					message += documntation[i]+'\n';
@@ -257,14 +257,9 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 					num=Number(args[0]);
 				}
 				codeforces.getAllTags(curchannel,num);
-				channel.send('זה יכול לקחת קצת זמן היעזר בסבלנות');
 				break;
 			case 'randomquestion':
-				const embed = new Discord.MessageEmbed()
-				.setTitle('הנה שאלה בשבילך')
-				.setColor(0x0000ff)
-				.setURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-				channel.send(embed);
+				codeforces.getGetRandomquestion(curchannel,args);
 				break;
 			default :
 				channel.send(':לא ממש הבנתי מה אתה מנסה להגיד הפקודות החוקיות הן' + '\n!add !help !scoreboard !randomquote !shutup !wakeup !remove');
