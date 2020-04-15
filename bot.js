@@ -84,7 +84,8 @@ var quotes=['זה ספר - מין דבר מלבני כזה עם דפים','אנ�
 	"היה כבר דיון ארוך (ניסו ללמד אותם סדר גודל) אז שאלו את הילדה מה יהיה עובי של 10 ספרים.\n"+
 	"בקיצור אלה מצאה באינטרנט מה הספר הכי עבה בעולם - יכול להיות 10 מטר\n"+
 	"אז פסלו לה את העבודה. היו מריבות עם המורה מפה עד להודעה חדשה.",
-	"אין לך מושג כמה זה נורא. אם אני צריך לבחור צעדת מוות מאושוויץ או לשמוע את לאנה מיינהארט אני נועל נעלי הליכה נשבע לך"];
+	"אין לך מושג כמה זה נורא. אם אני צריך לבחור צעדת מוות מאושוויץ או לשמוע את לאנה מיינהארט אני נועל נעלי הליכה נשבע לך",
+	"איך אתם חושבים שהגעתי לאמן אתכם? השתתפתי בשעשעון. והפסדתי."];
 var randomquote = function(channelID){
 	curchannel.send(quotes[Math.floor(Math.random()*quotes.length)]);
 }
@@ -202,6 +203,16 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				logger.info(ids);
 				channel.send('לבקשתך הוספתי '+args.length+' אנשים לרשימת המעקב שלי');
 				break;
+			case 'echo':
+				//var chanID= args[0];
+				channel= client.channels.cache.get(args[0]);
+				logger.info(channel);
+				var message = '';
+				for(var i=1;i<args.length;i++){
+					message += args[i]+' ';
+				}
+				channel.send(message);
+				break;
 			case 'remove':
 				if(args.length==0){
 					channel.send('מעניין ביקשת ממני להוריד אנשים אבל לא אמרת איזה\n'+'אתה יכול לתת רשימה של ids מופרדים ברווח בודד');
@@ -227,18 +238,22 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 					channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
 					logger.info('answering call for leaderboard');
 				}
-				
 				cses.results(curchannel,ids);
 				
 				break;
 			case 'difleaderboard':
 			case 'difscoreboard':
+				if(Math.random()<0.3){
+					var possibleresponses=['כמה זמן אתה רק מסתכל על תוצאות','לא יתווספו לך שאלות נוספות רק מלהסתכל אתה יודע?','אני הרשתי מסתכלת בתוצאות דא?','תפסיק להסתכל על תוצאות ותפתור שאלות'];
+					channel.send('<@' +userID+'> '+possibleresponses[Math.floor(Math.random()*possibleresponses.length)]);
+					logger.info('answering call for leaderboard');
+				}
 				cses.difresults(curchannel,ids);
 				break;
 			case 'load':
 				data = require('./data.json');
 				ids = data.ids;
-				channel.send('תענתי את רשימת המעקב');
+				channel.send('טענתי את רשימת המעקב');
 				logger.info(ids);
 				break;
 			case 'unload':
@@ -262,7 +277,7 @@ client.on('message', msg => {//(user, userID, channelID, message, evt)
 				codeforces.getGetRandomquestion(curchannel,args);
 				break;
 			default :
-				channel.send(':לא ממש הבנתי מה אתה מנסה להגיד הפקודות החוקיות הן' + '\n!add !help !scoreboard !randomquote !shutup !wakeup !remove');
+				channel.send(':לא ממש הבנתי מה אתה מנסה להגיד הפקודות החוקיות הן' + '\n!add !help !difleaderboard !scoreboard !randomquote !shutup !wakeup !remove');
          }
      }else{
 		 if(user.bot){
